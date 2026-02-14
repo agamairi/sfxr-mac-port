@@ -802,6 +802,7 @@ typedef struct {
     [self synthSample:chunkSize buffer:samples + samplesWritten];
     samplesWritten += chunkSize;
   }
+  _synthState.playing_sample = false;
 
   // Write WAV header
   unsigned int dword = 0;
@@ -851,6 +852,26 @@ typedef struct {
   free(samples);
   fclose(foutput);
   return YES;
+}
+
+- (void)generatePreview:(float *)buffer length:(int)length {
+  SynthState savedState = _synthState;
+
+  _synthState.playing_sample = true;
+  _synthState.phase = 0; // Reset phase for preview
+  [self resetSample:NO];
+
+  // We want to capture the whole sound in the buffer if possible.
+  // The buffer length is likely small (e.g. view width).
+  // We need to subsample or just show the beginning.
+  // Let's show the first 'length' samples for now, which gives a zoom-in look.
+  // Or better, step through the sound.
+
+  // Simple approach: generate `length` samples.
+  // This will show the beginning of the sound (attack/decay).
+  [self synthSample:length buffer:buffer];
+
+  _synthState = savedState;
 }
 
 @end

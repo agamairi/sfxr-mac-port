@@ -51,6 +51,12 @@ clang -c AppDelegate.m \
       -fobjc-arc \
       -O2
 
+clang -c WaveformView.m \
+      -o build/WaveformView.o \
+      -framework Cocoa \
+      -fobjc-arc \
+      -O2
+
 # Compile Objective-C++ files  
 clang++ -c SoundGenerator.mm \
       -o build/SoundGenerator.o \
@@ -74,12 +80,14 @@ clang++ -c MainViewController.mm \
 clang++ build/main.o \
       build/AppDelegate.o \
       build/SoundGenerator.o \
+      build/WaveformView.o \
       build/MainViewController.o \
       -o "build/SFXR - macos.app/Contents/MacOS/sfxr" \
       -framework Cocoa \
       -framework AVFoundation \
       -framework AudioToolbox \
       -framework CoreAudio \
+      -framework QuartzCore \
       -fobjc-arc
 
 if [ $? -eq 0 ]; then

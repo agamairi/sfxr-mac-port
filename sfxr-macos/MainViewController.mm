@@ -7,10 +7,12 @@
 
 #import "MainViewController.h"
 #import "SoundGenerator.h"
+#import "WaveformView.h"
 #import <QuartzCore/QuartzCore.h>
 
 @interface MainViewController ()
 @property(nonatomic, strong) SoundGenerator *soundGenerator;
+@property(nonatomic, strong) WaveformView *waveformView;
 @property(nonatomic, strong) NSSegmentedControl *waveTypeControl;
 @property(nonatomic, strong)
     NSMutableDictionary<NSString *, NSSlider *> *sliders;
@@ -137,6 +139,16 @@
           parent:_rightPanel
         isHeader:NO];
   yPos -= 35;
+
+  // Waveform View
+  _waveformView = [[WaveformView alloc]
+      initWithFrame:NSMakeRect(20, yPos - 60, rightWidth - 40, 60)];
+  __unsafe_unretained MainViewController *weakSelf = self;
+  _waveformView.onPlay = ^{
+    [weakSelf playSound:nil];
+  };
+  [_rightPanel addSubview:_waveformView];
+  yPos -= 100;
 
   // Waveform Selector
   _waveTypeControl = [[NSSegmentedControl alloc]
@@ -537,6 +549,20 @@
       self.sliders[key].floatValue = val;
     }
   }
+  [self updateWaveformView];
+}
+
+- (void)updateWaveformView {
+  if (!_waveformView)
+    return;
+  int len = (int)_waveformView.bounds.size.width; // 1 pixel per sample
+  if (len <= 0)
+    len = 200;
+  len *= 2; // Higher resolution
+  float *buffer = (float *)malloc(len * sizeof(float));
+  [_soundGenerator generatePreview:buffer length:len];
+  [_waveformView updateWaveform:buffer length:len];
+  free(buffer);
 }
 
 - (void)sliderChanged:(NSSlider *)sender {
@@ -546,10 +572,12 @@
       break;
     }
   }
+  [self updateWaveformView];
 }
 
 - (IBAction)waveTypeChanged:(NSSegmentedControl *)sender {
   _soundGenerator.waveType = (WaveType)sender.selectedSegment;
+  [self updateWaveformView];
 }
 
 - (void)runAndSync:(SEL)action {

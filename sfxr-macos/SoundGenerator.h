@@ -92,4 +92,7 @@ typedef NS_ENUM(NSInteger, WaveType) {
            withBitDepth:(int)bits
              sampleRate:(int)rate;
 
+// Preview
+- (void)generatePreview:(float *)buffer length:(int)length;
+
 @end
