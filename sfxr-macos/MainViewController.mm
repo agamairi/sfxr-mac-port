@@ -45,7 +45,6 @@
   _isDarkMode = YES; // Default to dark
 
   [self createUI];
-  [self createUI];
   [self updateUIFromGenerator];
 }
 
@@ -237,14 +236,45 @@
   [_labels addObject:footer]; // Add to labels to auto-update color
 
   // ==========================================
-  // CENTER PANEL (Parameters)
+  // CENTER PANEL (Parameters) - Wrapped in ScrollView
   // ==========================================
-  _centerPanel = [[NSView alloc]
-      initWithFrame:NSMakeRect(leftWidth, 0, centerWidth, height)];
-  _centerPanel.wantsLayer = YES;
-  [self.view addSubview:_centerPanel];
 
-  yPos = height - 50;
+  // Calculate required height based on content
+  // We have:
+  // - 50px margin top
+  // - ENVELOPE (Header + 4 sliders) -> 20 + 4*32 + 20 gap = 168
+  // - FREQUENCY (Header + 4 sliders) -> 20 + 4*32 + 20 gap = 168
+  // - VIBRATO (Header + 2 sliders) -> 20 + 2*32 + 20 gap = 104
+  // - FILTERS (Header + 2 sliders) -> 20 + 2*32 + 10 gap = 94
+  // - ADDITIONAL (Header + 3 sliders) -> 20 + 3*32 = 116
+  // Total approx: 50 + 168 + 168 + 104 + 94 + 116 = 700 + margins -> safe
+  // estimate 850-900
+
+  CGFloat contentHeight = 900;
+
+  NSScrollView *scrollView = [[NSScrollView alloc]
+      initWithFrame:NSMakeRect(leftWidth, 0, centerWidth, height)];
+  scrollView.hasVerticalScroller = YES;
+  scrollView.hasHorizontalScroller = NO;
+  scrollView.autohidesScrollers = YES;
+  scrollView.drawsBackground = NO; // Handle background in document view
+  scrollView.wantsLayer = YES;
+
+  _centerPanel = [[NSView alloc]
+      initWithFrame:NSMakeRect(0, 0, centerWidth, contentHeight)];
+  _centerPanel.wantsLayer = YES;
+
+  scrollView.documentView = _centerPanel;
+
+  // Scroll to top (in non-flipped coordinates, visible rect should be at top of
+  // document)
+  [scrollView.contentView scrollToPoint:NSMakePoint(0, contentHeight - height)];
+
+  [self.view addSubview:scrollView];
+
+  // Start yPos at top of the document view
+  yPos = contentHeight - 50;
+
   CGFloat colMargin = 40;
   CGFloat contentWidth = centerWidth - 2 * colMargin;
 
@@ -415,13 +445,19 @@
 
   // Logic to update views
   self.view.layer.backgroundColor = bg.CGColor;
-  _centerPanel.layer.backgroundColor = bg.CGColor;
-
-  _leftPanel.layer.backgroundColor = panelBg.CGColor;
-  _leftPanel.layer.borderColor = border.CGColor;
-
   _rightPanel.layer.backgroundColor = panelBg.CGColor;
   _rightPanel.layer.borderColor = border.CGColor;
+
+  // Center panel (document view)
+  _centerPanel.layer.backgroundColor = bg.CGColor;
+  // Scroll view needs to match background or be transparent
+  if (_centerPanel.superview
+          .superview) { // _centerPanel -> NSClipView -> NSScrollView
+    NSScrollView *sv = (NSScrollView *)_centerPanel.superview.superview;
+    if ([sv isKindOfClass:[NSScrollView class]]) {
+      sv.layer.backgroundColor = bg.CGColor;
+    }
+  }
 
   // Update Text Colors
   for (NSTextField *lbl in _labels) {
