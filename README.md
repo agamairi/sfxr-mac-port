@@ -13,6 +13,13 @@ This is a complete macOS application port of sfxr, featuring:
 - Load/Save sound parameters (.sfs files)
 - Universal binary support (Intel + Apple Silicon)
 
+## Screenshots
+
+| Dark Mode | Light Mode |
+|:-:|:-:|
+| ![Dark Mode](sfxr-macos/screenshot-1.png) | ![Light Mode](sfxr-macos/screenshot-2.png) |
+
+
 ## Building the Project
 
 ### Prerequisites
